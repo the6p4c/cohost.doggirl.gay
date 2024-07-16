@@ -28,7 +28,12 @@ async function main() {
 
   await withBrowser()(async (browser) => {
     await withPage(browser)(async (page) => {
-      const screenshot = await takeScreenshot(page, projectHandle, slug);
+      const screenshot = await takeScreenshot(
+        page,
+        { colorScheme: "dark" },
+        projectHandle,
+        slug
+      );
       await fs.writeFile(screenshotPath, screenshot);
 
       logger.info(`wrote screenshot to ${screenshotPath}`);

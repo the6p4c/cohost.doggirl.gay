@@ -4,6 +4,7 @@ import logger from "./logger";
 
 export default async function takeScreenshot(
   page: Page,
+  config: Config,
   projectHandle: string,
   slug: string
 ): Promise<Buffer> {
@@ -19,20 +20,37 @@ export default async function takeScreenshot(
 
   for (const action of actions) {
     logger.debug(`running prepare action: ${action.name}`);
-    await action.func({ page, thread, threadHeader, threadFooter });
+    await action.func({
+      page,
+      thread,
+      threadHeader,
+      threadFooter,
+      config,
+    });
   }
 
   return await thread.screenshot({ type: "png" });
 }
+
+export type Config = {
+  colorScheme: "dark" | "light";
+};
 
 type ActionArgs = {
   page: Page;
   thread: Locator;
   threadHeader: Locator;
   threadFooter: Locator;
+  config: Config;
 };
 
 const actions = [
+  {
+    name: "set color scheme",
+    async func({ page, config }: ActionArgs) {
+      await page.emulateMedia({ colorScheme: config.colorScheme });
+    },
+  },
   {
     name: "delete header bar",
     // the header bar can overlap with tall threads when the thread is scrolled into view before
