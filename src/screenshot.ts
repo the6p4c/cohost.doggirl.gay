@@ -2,7 +2,15 @@ import { Locator, Page } from "playwright";
 
 import logger from "./logger";
 
-export default async function takeScreenshot(page: Page): Promise<Buffer> {
+export default async function takeScreenshot(
+  page: Page,
+  projectHandle: string,
+  slug: string
+): Promise<Buffer> {
+  const url = `https://cohost.org/${projectHandle}/post/${slug}`;
+  logger.info(`requested screenshot of ${url}`);
+  await page.goto(url);
+
   const thread = page.locator(".co-post-box");
   const threadHeader = page.locator(".co-thread-header");
   const threadFooter = page.locator(".co-thread-footer");

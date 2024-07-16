@@ -8,7 +8,7 @@ import takeScreenshot from "./screenshot";
 async function main() {
   const args = process.argv.slice(2);
   if (args.length != 2) {
-    console.log(`usage: ??? <path to screenshot> <post url>`);
+    console.log("usage: ??? <path to screenshot> <post url>");
     process.exit(1);
   }
 
@@ -27,17 +27,11 @@ async function main() {
   const slug = match.groups.slug;
 
   await withBrowser()(async (browser) => {
-    logger.debug(`got browser ${browser}`);
-
     await withPage(browser)(async (page) => {
-      logger.debug(`got page ${page}`);
-
-      logger.info("navigating");
-      await page.goto(`https://cohost.org/${projectHandle}/post/${slug}`);
-
-      logger.info("taking screenshot");
-      const screenshot = await takeScreenshot(page);
+      const screenshot = await takeScreenshot(page, projectHandle, slug);
       await fs.writeFile(screenshotPath, screenshot);
+
+      logger.info(`wrote screenshot to ${screenshotPath}`);
     });
   });
 }
