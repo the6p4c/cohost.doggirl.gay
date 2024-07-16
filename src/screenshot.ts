@@ -1,3 +1,4 @@
+import util from "node:util";
 import { Locator, Page } from "playwright";
 
 import logger from "./logger";
@@ -9,7 +10,9 @@ export default async function takeScreenshot(
   slug: string
 ): Promise<Buffer> {
   const url = `https://cohost.org/${projectHandle}/post/${slug}`;
-  logger.info(`requested screenshot of ${url}`);
+  logger.info(
+    `requested screenshot of ${url} with config ${util.inspect(config)}`
+  );
   await page.goto(url);
 
   const thread = page.locator(".co-post-box");

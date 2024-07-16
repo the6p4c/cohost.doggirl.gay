@@ -3,16 +3,16 @@ import process from "node:process";
 import { BrowserContext, chromium } from "playwright";
 
 import logger from "./logger";
-import takeScreenshot from "./screenshot";
+import takeScreenshot, { Config } from "./screenshot";
 
 async function main() {
   const args = process.argv.slice(2);
-  if (args.length != 2) {
-    console.log("usage: ??? <path to screenshot> <post url>");
+  if (args.length != 2 && args.length != 3) {
+    console.log("usage: ??? <path to screenshot> <post url> [config JSON]");
     process.exit(1);
   }
 
-  const [screenshotPath, postUrl] = args;
+  const [screenshotPath, postUrl, configString] = args;
 
   const POST_URL_REGEXP =
     /^https?:\/\/(www\.)?cohost\.org\/(?<projectHandle>[a-z0-9\-]+)\/post\/(?<slug>.*)/i;
@@ -26,11 +26,17 @@ async function main() {
   const projectHandle = match.groups.projectHandle;
   const slug = match.groups.slug;
 
+  const defaultConfig: Config = { colorScheme: "dark", hideThreadHeader: true };
+  const config = {
+    ...defaultConfig,
+    ...(configString ? JSON.parse(configString) : {}),
+  };
+
   await withBrowser()(async (browser) => {
     await withPage(browser)(async (page) => {
       const screenshot = await takeScreenshot(
         page,
-        { colorScheme: "dark", hideThreadHeader: true },
+        config,
         projectHandle,
         slug
       );
