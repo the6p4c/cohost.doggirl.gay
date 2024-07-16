@@ -73,27 +73,13 @@ const actions = [
     },
   },
   {
-    name: "expand content warnings",
+    name: "expand content warnings and 18+ content",
     async func({ thread }: ActionArgs) {
-      const buttons = thread.locator(".co-filled-button", {
-        hasText: "show post",
-      });
-
-      if ((await buttons.count()) > 0) {
-        await buttons.evaluateAll(click);
-      }
-    },
-  },
-  {
-    name: "expand 18+ content",
-    async func({ thread }: ActionArgs) {
-      const buttons = thread.locator(".co-filled-button", {
-        hasText: "I am 18+",
-      });
-
-      if ((await buttons.count()) > 0) {
-        await buttons.evaluateAll(click);
-      }
+      await thread
+        .locator(".co-filled-button", {
+          hasText: /^(show post|I am 18\+)$/,
+        })
+        .evaluateAll(click);
     },
   },
   {
