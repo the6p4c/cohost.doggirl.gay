@@ -16,8 +16,6 @@ export default async function takeScreenshot(
   const threadHeader = page.locator(".co-thread-header");
   const threadFooter = page.locator(".co-thread-footer");
 
-  // await page.waitForLoadState("networkidle");
-
   for (const action of actions) {
     logger.debug(`running prepare action: ${action.name}`);
     await action.func({
