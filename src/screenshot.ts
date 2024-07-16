@@ -40,6 +40,7 @@ export default async function takeScreenshot(
 
 export type Config = {
   colorScheme: "dark" | "light";
+  collapseParentPosts: boolean;
   hideThreadHeader: boolean;
 };
 
@@ -116,6 +117,36 @@ const actions = [
       await thread
         .locator(".co-filled-button", { hasText: "hide post" })
         .evaluateAll(remove);
+    },
+  },
+  {
+    name: "collapse parent posts",
+    runIf: (config: Config) => config.collapseParentPosts,
+    async func({ thread }: ActionArgs) {
+      await thread.locator("> div").evaluateAll((posts) => {
+        const lastPost = posts.pop();
+        const parentPosts = posts;
+
+        if (!lastPost || !lastPost.parentElement) throw "oof";
+
+        const replacement = document.createElement("button");
+        replacement.className =
+          "co-link-button w-full cursor-pointer text-center font-bold";
+        replacement.type = "button";
+        replacement.innerText = `${parentPosts.length} hidden posts`;
+
+        const hairline = document.createElement("hr");
+        hairline.className = "co-hairline";
+
+        const hairlineWithMargin = document.createElement("hr");
+        hairlineWithMargin.className = "co-hairline my-1";
+
+        parentPosts.forEach((el) => el.remove());
+        lastPost.parentElement.insertBefore(replacement, lastPost);
+        lastPost.parentElement.insertBefore(hairline, lastPost);
+        lastPost.parentElement.insertBefore(hairlineWithMargin, lastPost);
+        lastPost.parentElement.insertBefore(hairline.cloneNode(), lastPost);
+      });
     },
   },
   {

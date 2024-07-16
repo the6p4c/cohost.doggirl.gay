@@ -26,7 +26,11 @@ async function main() {
   const projectHandle = match.groups.projectHandle;
   const slug = match.groups.slug;
 
-  const defaultConfig: Config = { colorScheme: "dark", hideThreadHeader: true };
+  const defaultConfig: Config = {
+    colorScheme: "dark",
+    collapseParentPosts: false,
+    hideThreadHeader: true,
+  };
   const config = {
     ...defaultConfig,
     ...(configString ? JSON.parse(configString) : {}),
