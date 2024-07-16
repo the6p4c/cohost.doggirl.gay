@@ -1,0 +1,122 @@
+import { Locator, Page } from "playwright";
+
+import logger from "./logger";
+
+export default async function takeScreenshot(page: Page): Promise<Buffer> {
+  const thread = page.locator(".co-post-box");
+  const threadHeader = page.locator(".co-thread-header");
+  const threadFooter = page.locator(".co-thread-footer");
+
+  // await page.waitForLoadState("networkidle");
+
+  for (const action of actions) {
+    logger.debug(`running prepare action: ${action.name}`);
+    await action.func({ page, thread, threadHeader, threadFooter });
+  }
+
+  return await thread.screenshot({ type: "png" });
+}
+
+type ActionArgs = {
+  page: Page;
+  thread: Locator;
+  threadHeader: Locator;
+  threadFooter: Locator;
+};
+
+const actions = [
+  {
+    name: "delete header bar",
+    // the header bar can overlap with tall threads when the thread is scrolled into view before
+    // taking the screenshot; removing the header bar allows us to use as much of the viewport as
+    // possible
+    async func({ page }: ActionArgs) {
+      await page.locator("header.fixed").evaluate(remove);
+    },
+  },
+  {
+    name: "remove rounded corners",
+    // the page background is visible behind the thread when rounded corners are present
+    async func({ thread, threadHeader, threadFooter }: ActionArgs) {
+      await Promise.all([
+        thread.evaluate((el) => (el.style.borderRadius = "0")),
+        threadHeader.evaluate((el) => (el.style.borderRadius = "0")),
+        threadFooter.evaluate((el) => (el.style.borderRadius = "0")),
+      ]);
+    },
+  },
+  {
+    name: "remove meatball menu",
+    async func({ threadHeader }: ActionArgs) {
+      await threadHeader
+        // delete the path from inside the svg so as to retain the header height
+        .locator(".co-action-button path")
+        // in a reply to an ask, the ask balloon is also a .co-action-button so we take the last
+        .last()
+        .evaluate(remove);
+    },
+  },
+  {
+    name: "remove log in icon",
+    // since we retrieve posts without being logged into an account, a log in button appears in the
+    // thread footer where the like and rebug buttons would usually appear
+    async func({ threadFooter }: ActionArgs) {
+      await threadFooter.locator(".co-action-button path").evaluate(remove);
+    },
+  },
+  {
+    name: "expand content warnings",
+    async func({ thread }: ActionArgs) {
+      const buttons = thread.locator(".co-filled-button", {
+        hasText: "show post",
+      });
+
+      if ((await buttons.count()) > 0) {
+        await buttons.evaluateAll(click);
+      }
+    },
+  },
+  {
+    name: "expand 18+ content",
+    async func({ thread }: ActionArgs) {
+      const buttons = thread.locator(".co-filled-button", {
+        hasText: "I am 18+",
+      });
+
+      if ((await buttons.count()) > 0) {
+        await buttons.evaluateAll(click);
+      }
+    },
+  },
+  {
+    name: "remove 'hide post' buttons",
+    // after expanding content warnings or 18+ content, "hide post" buttons appear which are useless
+    // in a screenshot. this also gives the post title more space. importantly, this doesn't hide
+    // the the list of content warnings or "18+" indicator
+    async func({ thread }: ActionArgs) {
+      await thread
+        .locator(".co-filled-button", { hasText: "hide post" })
+        .evaluateAll(remove);
+    },
+  },
+];
+
+function remove(el: Element | Element[]) {
+  if (Array.isArray(el)) {
+    el.forEach((el) => el.remove());
+  } else {
+    remove([el]);
+  }
+}
+
+function click(el: Element | Element[]) {
+  if (Array.isArray(el)) {
+    // playwright doesn't have a multi-element .click(), and doing a naive .all() and then .click()
+    // on each Locator causes issues if the element is removed from the DOM after being clicked. the
+    // Locators returned from .all() use .first() and .nth(n) to target each element, which break
+    // when the DOM is modified.
+    el.forEach((el) => el.dispatchEvent(new Event("click", { bubbles: true })));
+  } else {
+    click([el]);
+  }
+}

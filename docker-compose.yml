@@ -1,0 +1,9 @@
+services:
+  capture:
+    build: .
+    volumes:
+      - .:/home/node/dev
+      - browser-data:/data/userDataDir
+
+volumes:
+  browser-data:
