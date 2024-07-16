@@ -30,7 +30,7 @@ async function main() {
     await withPage(browser)(async (page) => {
       const screenshot = await takeScreenshot(
         page,
-        { colorScheme: "dark" },
+        { colorScheme: "dark", hideThreadHeader: true },
         projectHandle,
         slug
       );

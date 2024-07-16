@@ -17,14 +17,19 @@ export default async function takeScreenshot(
   const threadFooter = page.locator(".co-thread-footer");
 
   for (const action of actions) {
-    logger.debug(`running prepare action: ${action.name}`);
-    await action.func({
-      page,
-      thread,
-      threadHeader,
-      threadFooter,
-      config,
-    });
+    const run = action.runIf ? action.runIf(config) : true;
+    if (run) {
+      logger.debug(`running prepare action: ${action.name}`);
+      await action.func({
+        page,
+        thread,
+        threadHeader,
+        threadFooter,
+        config,
+      });
+    } else {
+      logger.debug(`skipped prepare action: ${action.name}`);
+    }
   }
 
   return await thread.screenshot({ type: "png" });
@@ -32,6 +37,7 @@ export default async function takeScreenshot(
 
 export type Config = {
   colorScheme: "dark" | "light";
+  hideThreadHeader: boolean;
 };
 
 type ActionArgs = {
@@ -107,6 +113,19 @@ const actions = [
       await thread
         .locator(".co-filled-button", { hasText: "hide post" })
         .evaluateAll(remove);
+    },
+  },
+  {
+    name: "hide thread header",
+    // the thread header contains information that is either mostly irrelevant (e.g. who rebugged
+    // the final post in the thread) or duplicated (e.g. the users of the second-last and last posts
+    // in the thread), so it can be nice to hide it
+    //
+    // TODO: detect if the link is to a rebug that only adds tags, since then the user who rebugged
+    // the final post in the thread *is* relevant
+    runIf: (config: Config) => config.hideThreadHeader,
+    async func({ threadHeader }: ActionArgs) {
+      await threadHeader.evaluate(remove);
     },
   },
 ];
