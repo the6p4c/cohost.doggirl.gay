@@ -1,7 +1,9 @@
 {
   "name": "cohost-embed-capture",
   "version": "0.1.0",
-  "packageManager": "pnpm@9.0.6+sha1.648f6014eb363abb36618f2ba59282a9eeb3e879",
+  "scripts": {
+    "dev": "tsx src/index.ts"
+  },
   "dependencies": {
     "@types/node": "^20.14.10",
     "playwright": "^1.45.1",
@@ -9,5 +11,6 @@
   },
   "devDependencies": {
     "tsx": "^4.16.2"
-  }
+  },
+  "packageManager": "pnpm@9.0.6+sha1.648f6014eb363abb36618f2ba59282a9eeb3e879"
 }
