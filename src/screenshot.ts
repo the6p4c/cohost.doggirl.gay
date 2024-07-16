@@ -40,8 +40,8 @@ export default async function takeScreenshot(
 
 export type Config = {
   colorScheme: "dark" | "light";
-  collapseParentPosts: boolean;
   hideThreadHeader: boolean;
+  collapseParentPosts: boolean;
 };
 
 type ActionArgs = {
@@ -120,46 +120,70 @@ const actions = [
     },
   },
   {
-    name: "collapse parent posts",
-    runIf: (config: Config) => config.collapseParentPosts,
-    async func({ thread }: ActionArgs) {
-      await thread.locator("> div").evaluateAll((posts) => {
-        const lastPost = posts.pop();
-        const parentPosts = posts;
+    name: "collapse thread",
+    runIf: (config: Config) =>
+      config.hideThreadHeader || config.collapseParentPosts,
+    async func({ thread, threadHeader, config }: ActionArgs) {
+      // this collection includes rebugs with tags
+      const items = thread.locator("> div");
+      // this collection only includes proper posts
+      const posts = thread.locator("> div:not([class])");
 
-        if (!lastPost || !lastPost.parentElement) throw "oof";
+      const [itemCount, postCount] = await Promise.all([
+        items.count(),
+        posts.count(),
+      ]);
 
-        const replacement = document.createElement("button");
-        replacement.className =
-          "co-link-button w-full cursor-pointer text-center font-bold";
-        replacement.type = "button";
-        replacement.innerText = `${parentPosts.length} hidden posts`;
+      // as soon as there is more than one post in a thread or a post is rebugged with tags (i.e.,
+      // there is more than one "item" in the thread), we earn redundancy between the thread header
+      // and post headers and thus need to do work
+      if (itemCount <= 1) return;
 
-        const hairline = document.createElement("hr");
-        hairline.className = "co-hairline";
+      if (config.hideThreadHeader && config.collapseParentPosts) {
+        // remove everything except for the last post in the thread, and a potential rebug with tags
+        await Promise.all([
+          threadHeader.evaluate(remove),
+          posts.evaluateAll((posts) => {
+            posts.pop();
+            posts.forEach((el) => el.remove());
+          }),
+        ]);
+      } else if (config.hideThreadHeader) {
+        await threadHeader.evaluate(remove);
+      } else if (config.collapseParentPosts) {
+        // if this is a top-level post, we don't have anything to collapse (we have to check since
+        // we might've got here if the post was rebugged with tags)
+        if (postCount <= 1) return;
 
-        const hairlineWithMargin = document.createElement("hr");
-        hairlineWithMargin.className = "co-hairline my-1";
+        await posts.evaluateAll((posts) => {
+          const lastPost = posts.pop();
+          const parentPosts = posts;
 
-        parentPosts.forEach((el) => el.remove());
-        lastPost.parentElement.insertBefore(replacement, lastPost);
-        lastPost.parentElement.insertBefore(hairline, lastPost);
-        lastPost.parentElement.insertBefore(hairlineWithMargin, lastPost);
-        lastPost.parentElement.insertBefore(hairline.cloneNode(), lastPost);
-      });
-    },
-  },
-  {
-    name: "hide thread header",
-    // the thread header contains information that is either mostly irrelevant (e.g. who rebugged
-    // the final post in the thread) or duplicated (e.g. the users of the second-last and last posts
-    // in the thread), so it can be nice to hide it
-    //
-    // TODO: detect if the link is to a rebug that only adds tags, since then the user who rebugged
-    // the final post in the thread *is* relevant
-    runIf: (config: Config) => config.hideThreadHeader,
-    async func({ threadHeader }: ActionArgs) {
-      await threadHeader.evaluate(remove);
+          // if lastPost is undefined, there are somehow no posts in the thread
+          if (!lastPost || !lastPost.parentElement) throw "oof";
+
+          const hiddenPosts = document.createElement("button");
+          hiddenPosts.className =
+            "co-link-button w-full cursor-pointer text-center font-bold";
+          hiddenPosts.type = "button";
+          hiddenPosts.innerText =
+            parentPosts.length == 1
+              ? "1 hidden post"
+              : `${parentPosts.length} hidden posts`;
+
+          const hairline = document.createElement("hr");
+          hairline.className = "co-hairline";
+
+          const hairlineWithMargin = document.createElement("hr");
+          hairlineWithMargin.className = "co-hairline my-1";
+
+          parentPosts.forEach((el) => el.remove());
+          lastPost.parentElement.insertBefore(hiddenPosts, lastPost);
+          lastPost.parentElement.insertBefore(hairline, lastPost);
+          lastPost.parentElement.insertBefore(hairlineWithMargin, lastPost);
+          lastPost.parentElement.insertBefore(hairline.cloneNode(), lastPost);
+        });
+      }
     },
   },
 ];

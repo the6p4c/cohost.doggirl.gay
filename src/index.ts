@@ -28,8 +28,8 @@ async function main() {
 
   const defaultConfig: Config = {
     colorScheme: "dark",
-    collapseParentPosts: false,
-    hideThreadHeader: true,
+    collapseParentPosts: true,
+    hideThreadHeader: false,
   };
   const config = {
     ...defaultConfig,
