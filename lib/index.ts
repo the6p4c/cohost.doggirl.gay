@@ -162,28 +162,24 @@ const actions = [
           // if lastPost is undefined, there are somehow no posts in the thread
           if (!lastPost || !lastPost.parentElement) throw "oof";
 
-          const arrow =
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="mr-1 inline-block w-4"><path fill-rule="evenodd" d="M12 2.25a.75.75 0 01.75.75v16.19l6.22-6.22a.75.75 0 111.06 1.06l-7.5 7.5a.75.75 0 01-1.06 0l-7.5-7.5a.75.75 0 111.06-1.06l6.22 6.22V3a.75.75 0 01.75-.75z" clip-rule="evenodd"></path></svg>';
-          const hiddenPosts = document.createElement("button");
-          hiddenPosts.className =
-            "co-link-button w-full cursor-pointer text-center font-bold";
-          hiddenPosts.type = "button";
-          hiddenPosts.innerHTML =
-            parentPosts.length == 1
-              ? `${arrow}1 hidden post`
-              : `${arrow}${parentPosts.length} hidden posts`;
-
-          const hairline = document.createElement("hr");
-          hairline.className = "co-hairline";
-
-          const hairlineWithMargin = document.createElement("hr");
-          hairlineWithMargin.className = "co-hairline my-1";
+          // this is just an easy way to create multiple elements
+          const replacement = document.createElement("div");
+          replacement.innerHTML = `
+<button class="co-link-button w-full cursor-pointer text-center font-bold" type="button">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="mr-1 inline-block w-4">
+    <path fill-rule="evenodd" d="M12 2.25a.75.75 0 01.75.75v16.19l6.22-6.22a.75.75 0 111.06 1.06l-7.5 7.5a.75.75 0 01-1.06 0l-7.5-7.5a.75.75 0 111.06-1.06l6.22 6.22V3a.75.75 0 01.75-.75z" clip-rule="evenodd" />
+  </svg>${parentPosts.length} hidden post${parentPosts.length == 1 ? "" : "s"}
+</button>
+<hr class="co-hairline" />
+<hr class="co-hairline my-1" />
+<hr class="co-hairline" />
+          `.trim();
+          const replacements = Array.from(replacement.children);
 
           parentPosts.forEach((el) => el.remove());
-          lastPost.parentElement.insertBefore(hiddenPosts, lastPost);
-          lastPost.parentElement.insertBefore(hairline, lastPost);
-          lastPost.parentElement.insertBefore(hairlineWithMargin, lastPost);
-          lastPost.parentElement.insertBefore(hairline.cloneNode(), lastPost);
+          for (const node of replacements) {
+            lastPost.parentElement.insertBefore(node, lastPost);
+          }
         });
       }
     },
