@@ -6,6 +6,7 @@ import { hideBin } from "yargs/helpers";
 
 import takeScreenshot, { Config } from "../lib";
 import logger from "../lib/logger";
+import { parsePostUrl } from "../lib/url";
 import tests from "./tests";
 
 function main() {
@@ -55,19 +56,15 @@ function main() {
 }
 
 async function commandGet(path: string, url: string, config: Config) {
-  const urlParsed = parsePostUrl(url);
-  if (!urlParsed) {
-    console.log("error: invalid post url");
-    process.exit(1);
-  }
+  const post = parsePostUrl(url);
 
   await withBrowser()(async (browser) => {
     await withPage(browser)(async (page) => {
       const screenshot = await takeScreenshot(
         page,
         config,
-        urlParsed.projectHandle,
-        urlParsed.slug
+        post.projectHandle,
+        post.slug
       );
       await fs.writeFile(path, screenshot);
 
@@ -84,40 +81,24 @@ async function commandTest(names: string[], config: Config) {
 
   await withBrowser()(async (browser) => {
     for (const name of names) {
-      const testCase = tests[name];
+      const { description, url } = tests[name];
       console.log(`running test case ${name}`);
-      console.log(`  ${testCase.description}`);
-
-      const parsedUrl = parsePostUrl(testCase.url);
-      if (!parsedUrl) throw "oof";
+      console.log(`  description: ${description}`);
+      console.log(`  url: ${url}`);
 
       await withPage(browser)(async (page) => {
+        const post = parsePostUrl(url);
         const screenshot = await takeScreenshot(
           page,
           config,
-          parsedUrl.projectHandle,
-          parsedUrl.slug
+          post.projectHandle,
+          post.slug
         );
 
         await fs.writeFile(`tests/${name}.png`, screenshot);
       });
     }
   });
-}
-
-function parsePostUrl(
-  url: string
-): { projectHandle: string; slug: string } | undefined {
-  const URL_REGEXP =
-    /^https?:\/\/(www\.)?cohost\.org\/(?<projectHandle>[a-z0-9\-]+)\/post\/(?<slug>.*)/i;
-
-  const groups = url.match(URL_REGEXP)?.groups;
-  if (!groups) return undefined;
-
-  return {
-    projectHandle: groups.projectHandle,
-    slug: groups.slug,
-  };
 }
 
 function withBrowser() {
