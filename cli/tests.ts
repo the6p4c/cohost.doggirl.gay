@@ -38,6 +38,11 @@ const tests: { [key: string]: TestCase } = {
     url: "https://cohost.org/bark-test-2/post/6906506-empty",
   },
 
+  draft: {
+    description: "unpublished/draft post",
+    url: "https://cohost.org/bark-test/post/6916231-woah/c910e8b1f880498ab05b0d16e798bcff",
+  },
+
   "expand-cw": {
     description: "thread of two posts, each with content warnings",
     url: "https://cohost.org/bark-test/post/3771667-cw-post-2-headline",
