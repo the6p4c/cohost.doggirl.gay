@@ -63,7 +63,7 @@ async function commandGet(path: string, url: string, config: Config) {
       const screenshot = await takeScreenshot(page, config, post);
 
       await fs.writeFile(path, screenshot);
-      logger.info(`wrote screenshot to ${path}`);
+      console.log(`wrote screenshot to ${path}`);
     });
   });
 }
@@ -73,6 +73,10 @@ async function commandTest(names: string[], config: Config) {
   for (const name of names) {
     console.log(`  - ${name}`);
   }
+
+  const outputDir = "test-output";
+  console.log(`test output directory: ${outputDir}/`);
+  await fs.mkdir(outputDir, { recursive: true });
 
   await withBrowser()(async (browser) => {
     for (const name of names) {
@@ -86,9 +90,9 @@ async function commandTest(names: string[], config: Config) {
       await withPage(browser)(async (page) => {
         const screenshot = await takeScreenshot(page, config, post);
 
-        const path = `tests/${name}.png`;
+        const path = `${outputDir}/${name}.png`;
         await fs.writeFile(path, screenshot);
-        logger.info(`wrote screenshot to ${path}`);
+        console.log(`wrote screenshot to ${path}`);
       });
     }
   });
