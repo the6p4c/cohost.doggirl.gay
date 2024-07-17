@@ -25,7 +25,7 @@ function main() {
             type: "string",
             demandOption: true,
           }),
-      (argv) => commandGet(argv.path, argv.url)
+      (argv) => commandGet(argv.path, argv.url, argv.config as Config)
     )
     .command(
       "test [names...]",
@@ -35,30 +35,31 @@ function main() {
           array: true,
           type: "string",
           choices: Array.from(Object.keys(tests)),
-          default: [] as string[],
+          default: Array.from(Object.keys(tests)),
         }),
-      (argv) => commandTest(argv.names)
+      (argv) => commandTest(argv.names, argv.config as Config)
     )
+    .option("config", {
+      type: "string",
+      default: "{}",
+      coerce: (s) => ({
+        // default config
+        colorScheme: "dark",
+        collapseParentPosts: true,
+        hideThreadHeader: false,
+        // overlay provided config
+        ...eval(`(${s})`),
+      }),
+    })
     .parse();
 }
 
-async function commandGet(path: string, url: string) {
+async function commandGet(path: string, url: string, config: Config) {
   const urlParsed = parsePostUrl(url);
   if (!urlParsed) {
     console.log("error: invalid post url");
     process.exit(1);
   }
-
-  const defaultConfig: Config = {
-    colorScheme: "dark",
-    collapseParentPosts: true,
-    hideThreadHeader: false,
-  };
-  const configString = "";
-  const config = {
-    ...defaultConfig,
-    ...(configString ? JSON.parse(configString) : {}),
-  };
 
   await withBrowser()(async (browser) => {
     await withPage(browser)(async (page) => {
@@ -75,7 +76,7 @@ async function commandGet(path: string, url: string) {
   });
 }
 
-async function commandTest(names: string[]) {
+async function commandTest(names: string[], config: Config) {
   console.log("running test cases:");
   for (const name of names) {
     console.log(`  - ${name}`);
@@ -93,11 +94,7 @@ async function commandTest(names: string[]) {
       await withPage(browser)(async (page) => {
         const screenshot = await takeScreenshot(
           page,
-          {
-            colorScheme: "light",
-            collapseParentPosts: false,
-            hideThreadHeader: false,
-          },
+          config,
           parsedUrl.projectHandle,
           parsedUrl.slug
         );
