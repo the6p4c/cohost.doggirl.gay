@@ -2,14 +2,14 @@ import util from "node:util";
 import { Locator, Page } from "playwright";
 
 import logger from "./logger";
+import { Post, buildPostUrl } from "./url";
 
 export default async function takeScreenshot(
   page: Page,
   config: Config,
-  projectHandle: string,
-  slug: string
+  post: Post
 ): Promise<Buffer> {
-  const url = `https://cohost.org/${projectHandle}/post/${slug}`;
+  const url = buildPostUrl(post);
   logger.info(
     `requested screenshot of ${url} with config ${util.inspect(config)}`
   );

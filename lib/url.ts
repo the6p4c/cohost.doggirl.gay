@@ -31,3 +31,13 @@ export function parsePostUrl(urlString: string): Post {
     commentUuid,
   };
 }
+
+export function buildPostUrl(post: Post): string {
+  let url = `https://cohost.org/${post.projectHandle}/post/${post.slug}`;
+
+  if (post.draftNonce) {
+    url += `/${post.draftNonce}`;
+  }
+
+  return url;
+}

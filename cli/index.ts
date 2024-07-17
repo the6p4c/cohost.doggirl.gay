@@ -60,14 +60,9 @@ async function commandGet(path: string, url: string, config: Config) {
 
   await withBrowser()(async (browser) => {
     await withPage(browser)(async (page) => {
-      const screenshot = await takeScreenshot(
-        page,
-        config,
-        post.projectHandle,
-        post.slug
-      );
-      await fs.writeFile(path, screenshot);
+      const screenshot = await takeScreenshot(page, config, post);
 
+      await fs.writeFile(path, screenshot);
       logger.info(`wrote screenshot to ${path}`);
     });
   });
@@ -86,16 +81,14 @@ async function commandTest(names: string[], config: Config) {
       console.log(`  description: ${description}`);
       console.log(`  url: ${url}`);
 
-      await withPage(browser)(async (page) => {
-        const post = parsePostUrl(url);
-        const screenshot = await takeScreenshot(
-          page,
-          config,
-          post.projectHandle,
-          post.slug
-        );
+      const post = parsePostUrl(url);
 
-        await fs.writeFile(`tests/${name}.png`, screenshot);
+      await withPage(browser)(async (page) => {
+        const screenshot = await takeScreenshot(page, config, post);
+
+        const path = `tests/${name}.png`;
+        await fs.writeFile(path, screenshot);
+        logger.info(`wrote screenshot to ${path}`);
       });
     }
   });
