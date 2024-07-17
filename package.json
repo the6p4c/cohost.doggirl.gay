@@ -2,7 +2,7 @@
   "name": "cohost-embed-capture",
   "version": "0.1.0",
   "scripts": {
-    "dev": "tsx src/index.ts"
+    "dev": "tsx cli/index.ts"
   },
   "dependencies": {
     "@types/node": "^20.14.10",

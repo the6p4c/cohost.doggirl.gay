@@ -4,8 +4,8 @@ import { BrowserContext, chromium } from "playwright";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 
-import logger from "./logger";
-import takeScreenshot, { Config } from "./screenshot";
+import takeScreenshot, { Config } from "../lib";
+import logger from "../lib/logger";
 import tests from "./tests";
 
 function main() {
